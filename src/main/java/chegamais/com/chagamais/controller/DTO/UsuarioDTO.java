@@ -93,7 +93,7 @@ public class UsuarioDTO implements DTO_Interface<Usuario, UsuarioResponse>{
     }
 
     public Usuario converterParaModel(){
-        Usuario  usuario = new Usuario(this.nome, this.dataNascimento, this.posicaoFavorita, this.email, this.senha);
+        Usuario usuario = new Usuario(this.nome, this.dataNascimento, this.posicaoFavorita, this.email, this.senha, null);
         return usuario;
     }
 

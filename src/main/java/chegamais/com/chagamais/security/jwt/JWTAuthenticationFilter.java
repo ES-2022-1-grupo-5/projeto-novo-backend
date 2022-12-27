@@ -1,63 +1,48 @@
 package chegamais.com.chagamais.security.jwt;
 
-import chegamais.com.chagamais.controller.DTO.UsuarioDTO;
-import chegamais.com.chagamais.model.Usuario;
-import com.auth0.jwt.JWT;
-import com.auth0.jwt.algorithms.Algorithm;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import org.springframework.security.authentication.AuthenticationManager;
+import chegamais.com.chagamais.security.CustomUserDetailsService;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
-import org.springframework.security.core.Authentication;
-import org.springframework.security.core.AuthenticationException;
-import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.security.web.authentication.WebAuthenticationDetailsSource;
+import org.springframework.util.StringUtils;
+import org.springframework.web.filter.OncePerRequestFilter;
 
 import javax.servlet.FilterChain;
+import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
-import java.util.ArrayList;
 
 import static chegamais.com.chagamais.security.securityConfig.SecurityConstants.*;
 
-public class JWTAuthenticationFilter extends UsernamePasswordAuthenticationFilter {
-
-
-    private AuthenticationManager authenticationManager;
-
-    public JWTAuthenticationFilter(AuthenticationManager authenticationManager) {
-        this.authenticationManager = authenticationManager;
-        setFilterProcessesUrl("/api/auth/login"); //url que vai ser chamada para fazer o login
-    }
+public class JWTAuthenticationFilter extends OncePerRequestFilter {
+    @Autowired
+    private JWTAuthorizationFilter jwtAuthorizationFilter;
+    @Autowired
+    private CustomUserDetailsService customUserDetailsService;
 
     @Override
-    public Authentication attemptAuthentication(HttpServletRequest request, HttpServletResponse response)
-            throws AuthenticationException {
-        try {
-            UsuarioDTO credenciais = new ObjectMapper()
-                    .readValue(request.getInputStream(), UsuarioDTO.class);
+    protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain) throws ServletException, IOException {
+        String token = getJWTFromRequest(request);
+        if (StringUtils.hasText(token) && jwtAuthorizationFilter.validateToken(token)){
+            String userEmail = jwtAuthorizationFilter.getUserEmailFromToken(token);
 
-            UsernamePasswordAuthenticationToken authToken = new UsernamePasswordAuthenticationToken(
-                    credenciais.getEmail(), credenciais.getSenha(), new ArrayList<>());
-
-            Authentication auth = authenticationManager.authenticate(authToken);
-            return auth;
-
-        } catch (IOException e) {
-            throw new RuntimeException(e);
+            UserDetails userDetails = customUserDetailsService.loadUserByUsername(userEmail);
+            UsernamePasswordAuthenticationToken authenticationToken = new UsernamePasswordAuthenticationToken(userDetails, null,
+                    userDetails.getAuthorities());
+            authenticationToken.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
+            SecurityContextHolder.getContext().setAuthentication(authenticationToken);
         }
+        filterChain.doFilter(request, response);
     }
 
-    @Override
-    protected void successfulAuthentication(HttpServletRequest request, HttpServletResponse response, FilterChain chain, Authentication auth) throws IOException {
-        String token = JWT.create()
-                .withIssuer("auth0")
-                .withSubject(((Usuario) auth.getPrincipal()).getEmail())
-                .withExpiresAt(new java.util.Date(System.currentTimeMillis() + EXPIRATION_TIME))
-                .sign(Algorithm.HMAC512(SECRET_KEY.getBytes()));
-
-        String body = ((Usuario) auth.getPrincipal()).getId() + ";" + token;
-        response.getWriter().write(body);
-        response.getWriter().flush();
+    private String getJWTFromRequest(HttpServletRequest request) {
+        String bearerToken = request.getHeader(HEADER_STRING);
+        if(StringUtils.hasText(bearerToken) && bearerToken.startsWith(TOKEN_PREFIX)) {
+            return bearerToken.substring(7);
+        }
+        return null;
     }
-
 }

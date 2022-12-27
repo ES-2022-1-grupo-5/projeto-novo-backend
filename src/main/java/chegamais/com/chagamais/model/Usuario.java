@@ -3,13 +3,12 @@ package chegamais.com.chagamais.model;
 
 import org.springframework.security.core.GrantedAuthority;
 
-import javax.persistence.Entity;
-import javax.persistence.GeneratedValue;
-import javax.persistence.GenerationType;
-import javax.persistence.Id;
+import javax.persistence.*;
 import javax.validation.constraints.NotEmpty;
 import javax.validation.constraints.NotNull;
+import java.util.ArrayList;
 import java.util.Collection;
+import java.util.List;
 
 
 @Entity
@@ -27,20 +26,25 @@ public class Usuario {
     private String email;
    @NotNull @NotEmpty 
     private String senha;
-    
-    
+
+    @ManyToMany(fetch = FetchType.EAGER)
+    @JoinTable(name = "usuario_roles", joinColumns = @JoinColumn(name = "usuario_id", referencedColumnName = "id"),
+            inverseJoinColumns = @JoinColumn(name = "role_id", referencedColumnName = "id")) //cria uma tabela de relacionamento entre usuario e role
+    private List<Role> roles = new ArrayList<>();
+
     public Usuario() {
 
     }
 
 
     public Usuario(@NotNull @NotEmpty String nome, @NotNull @NotEmpty String dataNascimento, String posicaoFavorita,
-            @NotNull @NotEmpty String email, @NotNull @NotEmpty String senha) {
+            @NotNull @NotEmpty String email, @NotNull @NotEmpty String senha, List<Role> roles) {
         this.nome = nome;
         this.dataNascimento = dataNascimento;
         this.posicaoFavorita = this.analisarPosicaoFavorita(posicaoFavorita);
         this.email = email;
         this.senha = senha;
+        this.roles = roles;
     }
 
 
@@ -105,11 +109,19 @@ public class Usuario {
 
     private String analisarPosicaoFavorita(String posicao){
         if( posicao == null || posicao == ""){
-            return "Não delcarada";
+            return "Não declarada";
         }
         else {
             return posicao;
         }
+    }
+
+    public List<Role> getRoles() {
+        return roles;
+    }
+
+    public void setRoles(List<Role> roles) {
+        this.roles = roles;
     }
 
 }

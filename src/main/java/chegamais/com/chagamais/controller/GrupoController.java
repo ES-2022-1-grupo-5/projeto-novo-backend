@@ -24,13 +24,13 @@ import chegamais.com.chagamais.controller.Response.GrupoResponse;
 import chegamais.com.chagamais.services.GrupoService;
 
 @RestController
-@RequestMapping("/grupo")
+@RequestMapping("/api/")
 public class GrupoController {
 
     @Autowired
     private GrupoService grupoService;
 
-    @GetMapping
+    @GetMapping("grupo")
     public List<GrupoResponse> listar(){
 
         List<GrupoDTO> Grupos = this.grupoService.obterTodos();
@@ -38,7 +38,7 @@ public class GrupoController {
         return this.converterLista(Grupos);
     }
 
-    @GetMapping("/{id}")
+    @GetMapping("grupo/{id}")
     public ResponseEntity<GrupoResponse> selecionarPorId(@PathVariable Long id){
 
         GrupoDTO GrupoDTO = grupoService.obterPorId(id);
@@ -46,7 +46,7 @@ public class GrupoController {
         return this.gerarResposta(GrupoDTO, 200);
     }
 
-    @PostMapping
+    @PostMapping("grupo")
     public ResponseEntity<GrupoResponse> cadastrar(@RequestBody @Valid GrupoForm GrupoForm){
 
         GrupoDTO GrupoDTO = this.grupoService.adicionar(GrupoForm.converterParaDTO());
@@ -54,7 +54,7 @@ public class GrupoController {
         return this.gerarResposta(GrupoDTO, 200);
     }
 
-    @PutMapping("/{id}")
+    @PutMapping("grupo/{id}")
     public ResponseEntity<GrupoResponse> atualizar(@RequestBody GrupoFormUpdate GrupoFormUpdate, @PathVariable Long id){
 
         GrupoDTO GrupoDTO = this.grupoService.atualizar(GrupoFormUpdate.converterParaDTO(), id);
@@ -62,7 +62,7 @@ public class GrupoController {
         return this.gerarResposta(GrupoDTO, 200);
     }
 
-    @DeleteMapping("/{id}")
+    @DeleteMapping("grupo/{id}")
     public ResponseEntity<GrupoResponse> deletarPorId(@PathVariable Long id){
 
         GrupoDTO GrupoDTO = this.grupoService.deletarPorId(id);

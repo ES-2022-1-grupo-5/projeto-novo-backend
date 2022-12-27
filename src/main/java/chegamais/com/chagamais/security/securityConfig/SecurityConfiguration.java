@@ -2,6 +2,7 @@ package chegamais.com.chagamais.security.securityConfig;
 
 import chegamais.com.chagamais.security.CustomUserDetailsService;
 import chegamais.com.chagamais.security.jwt.JWTAuthenticationEntryPoint;
+import chegamais.com.chagamais.security.jwt.JWTAuthenticationFilter;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -20,6 +21,7 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.provisioning.InMemoryUserDetailsManager;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 
 import static chegamais.com.chagamais.security.securityConfig.SecurityConstants.SIGN_UP_URL;
 
@@ -31,8 +33,9 @@ public class SecurityConfiguration {
     private CustomUserDetailsService userDetailsService;
 
     @Autowired
-    public SecurityConfiguration(CustomUserDetailsService userDetailsService) {
+    public SecurityConfiguration(CustomUserDetailsService userDetailsService, JWTAuthenticationEntryPoint jwtAuthenticationEntryPoint) {
         this.userDetailsService = userDetailsService;
+        this.jwtAuthenticationEntryPoint = jwtAuthenticationEntryPoint;
     }
 
     @Bean
@@ -40,30 +43,19 @@ public class SecurityConfiguration {
         http
                 .csrf().disable()
                 .exceptionHandling()
-                //.authenticationEntryPoint(jwtAuthenticationEntryPoint)
+                .authenticationEntryPoint(jwtAuthenticationEntryPoint)
                 .and()
                 .sessionManagement()
                 .sessionCreationPolicy(SessionCreationPolicy.STATELESS)
                 .and()
                 .authorizeRequests()
-                .antMatchers(HttpMethod.POST, SIGN_UP_URL).permitAll() //TODO: mudar para permitir apenas o endpoint de registro
+                .antMatchers("/api/auth/**").permitAll()
                 .anyRequest().authenticated()
                 .and()
                 .httpBasic();
 
-
+        http.addFilterBefore(jwtAuthenticationFilter(), UsernamePasswordAuthenticationFilter.class);
         return http.build();
-
-
-        /* -- Trecho de código com WEBSecurityConfigurerAdapter--
-        http.cors().and().authorizeRequests((authorize) -> authorize
-                .antMatchers(HttpMethod.POST, "/api/services/controller/user").permitAll() // ALTERAR PADRAO
-                .anyRequest().authenticated()
-                .and()
-                .addFilterBefore(new JWTAuthenticationFilter(authentication -> authentication), JWTAuthorizationFilter.class)
-                .sessionManagement().sessionCreationPolicy(SessionCreationPolicy.STATELESS);
-        return http.build();
-         */
     }
 
     @Bean
@@ -83,4 +75,8 @@ public class SecurityConfiguration {
         return new BCryptPasswordEncoder();
     }
 
+    @Bean
+    public JWTAuthenticationFilter jwtAuthenticationFilter() {
+        return new JWTAuthenticationFilter();
+    }
 }

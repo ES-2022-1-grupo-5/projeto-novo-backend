@@ -24,13 +24,13 @@ import chegamais.com.chagamais.controller.Response.UsuarioResponse;
 import chegamais.com.chagamais.services.UsuarioService;
 
 @RestController
-@RequestMapping("/usuario")
+@RequestMapping("/api/")
 public class UsuarioController {
 
     @Autowired
     private UsuarioService usuarioService;
 
-    @GetMapping
+    @GetMapping("usuario")
     public List<UsuarioResponse> listar(){
 
         List<UsuarioDTO> Usuarios = this.usuarioService.obterTodos();
@@ -38,7 +38,7 @@ public class UsuarioController {
         return this.converterLista(Usuarios);
     }
 
-    @GetMapping("/{id}")
+    @GetMapping("usuario/{id}")
     public ResponseEntity<UsuarioResponse> selecionarPorId(@PathVariable Long id){
 
         UsuarioDTO UsuarioDTO = usuarioService.obterPorId(id);
@@ -49,14 +49,13 @@ public class UsuarioController {
     /* Método em AuthController
     @PostMapping
     public ResponseEntity<UsuarioResponse> cadastrar(@RequestBody @Valid UsuarioForm UsuarioForm){
-
         UsuarioDTO UsuarioDTO = this.usuarioService.adicionar(UsuarioForm.converterParaDTO());
 
         return this.gerarResposta(UsuarioDTO, 200);
     }
      */
 
-    @PutMapping("/{id}")
+    @PutMapping("usuario/{id}")
     public ResponseEntity<UsuarioResponse> atualizar(@RequestBody UsuarioFormUpdate UsuarioFormUpdate, @PathVariable Long id){
 
         UsuarioDTO UsuarioDTO = this.usuarioService.atualizar(UsuarioFormUpdate.converterParaDTO(), id);
@@ -64,7 +63,7 @@ public class UsuarioController {
         return this.gerarResposta(UsuarioDTO, 200);
     }
 
-    @DeleteMapping("/{id}")
+    @DeleteMapping("usuario/{id}")
     public ResponseEntity<UsuarioResponse> deletarPorId(@PathVariable Long id){
 
         UsuarioDTO UsuarioDTO = this.usuarioService.deletarPorId(id);

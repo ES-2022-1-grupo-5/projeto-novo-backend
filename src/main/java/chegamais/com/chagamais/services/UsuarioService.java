@@ -1,9 +1,13 @@
 package chegamais.com.chagamais.services;
 
+import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 import java.util.ArrayList;
 
+import chegamais.com.chagamais.config.ErroDeValidacaoDTO;
+import chegamais.com.chagamais.model.Role;
+import chegamais.com.chagamais.repository.RoleRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -19,6 +23,8 @@ public class UsuarioService implements ServiceInteface<UsuarioDTO> {
 
     @Autowired
     private UsuarioRepository usuarioRepository;
+    @Autowired
+    private RoleRepository roleRepository;
     @Autowired
     private PasswordEncoder passwordEncoder;
 
@@ -43,10 +49,11 @@ public class UsuarioService implements ServiceInteface<UsuarioDTO> {
     public UsuarioDTO adicionar(UsuarioDTO dto) {
 
         dto.setId(null);
-
         dto.setSenha(passwordEncoder.encode(dto.getSenha()));
+        Role role = roleRepository.findByNome("USER").get();
 
         Usuario usuario = dto.converterParaModel();
+        usuario.setRoles(Collections.singletonList(role));
 
         usuarioRepository.save(usuario);
 
@@ -103,7 +110,7 @@ public class UsuarioService implements ServiceInteface<UsuarioDTO> {
     	
     	for(Usuario usuario: usuarios) {
     		UsuarioDTO dto = this.converterModelParaDTO(usuario);
-    		DTOs.add( dto);
+    		DTOs.add(dto);
     	}
     	
     	return DTOs;
@@ -130,29 +137,29 @@ public class UsuarioService implements ServiceInteface<UsuarioDTO> {
 
         String nomeDTO = usuarioDTO.getNome();
         if(nomeDTO != null ){
-            if(nomeDTO != ""){
+            if(!nomeDTO.equals("")){
                 usuario.setNome(nomeDTO);
             }
         }
 
         String emailDTO = usuarioDTO.getEmail();
         if(emailDTO != null ){
-            if(emailDTO != ""){
+            if(!emailDTO.equals("")){
                 usuario.setEmail(emailDTO);
             }
         }
 
         String senhaDTO = usuarioDTO.getSenha();
         if(senhaDTO != null){
-            if(senhaDTO != ""){
-                usuario.setSenha(senhaDTO);
+            if(!senhaDTO.equals("")){
+                usuario.setSenha(passwordEncoder.encode(usuarioDTO.getSenha()));
             }
         }
 
         String posicaoDTO = usuarioDTO.getPosicaoFavorita();
         if(posicaoDTO != null){
-            if(posicaoDTO != ""){
-                usuario.setPosicaoFavorita(posicaoDTO);;
+            if(!posicaoDTO.equals("")){
+                usuario.setPosicaoFavorita(posicaoDTO);
             }
         }
         
@@ -162,6 +169,10 @@ public class UsuarioService implements ServiceInteface<UsuarioDTO> {
 
         }
 
+    }
+
+    public boolean checksEmail(String email) {
+        return usuarioRepository.findByEmail(email).isPresent();
     }
 
 }

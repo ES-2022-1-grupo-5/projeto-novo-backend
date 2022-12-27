@@ -1,5 +1,6 @@
 package chegamais.com.chagamais.security;
 
+import chegamais.com.chagamais.model.Role;
 import chegamais.com.chagamais.model.Usuario;
 import chegamais.com.chagamais.repository.UsuarioRepository;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -13,6 +14,8 @@ import org.springframework.stereotype.Service;
 
 import java.util.Collection;
 import java.util.Collections;
+import java.util.List;
+import java.util.stream.Collectors;
 
 @Service
 public class CustomUserDetailsService implements UserDetailsService {
@@ -27,12 +30,14 @@ public class CustomUserDetailsService implements UserDetailsService {
         Usuario usuario = usuarioRepository.findByEmail(email)
                 .orElseThrow(() -> new UsernameNotFoundException("Usuário não encontrado"));
 
-        return new User(usuario.getEmail(), usuario.getSenha(), getAuthorities());
+        return new User(usuario.getEmail(), usuario.getSenha(), mapRolesToAuthorities(usuario.getRoles()));
     }
 
     // TODO: Implementar a autorização de acordo com o perfil do usuário (ROLE_ADMIN, ROLE_USER)
-    private Collection<? extends GrantedAuthority> getAuthorities() {
-        return Collections.singletonList(new SimpleGrantedAuthority("USER"));
+    private Collection<? extends GrantedAuthority> mapRolesToAuthorities(List<Role> roles) {
+        return roles.stream()
+                .map(role -> new SimpleGrantedAuthority(role.getNome()))
+                .collect(Collectors.toList());
     }
 
 }
